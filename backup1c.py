@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: cp1251 -*-
 
 import subprocess
 import os, os.path
@@ -9,31 +9,34 @@ import logging
 
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = u'D:\\backup\\logs\\backup1c.log')
 
-# РџСЂРѕРІРµСЂСЏРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ РёР· РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё
+# Пишем в лог приветствие запуска архивирования
+logging.info(u'======= Archiving started in platform {} ======='.format(sys.platform))
+
+# Проверяем количество аргументов в командной строке
 if len(sys.argv) != 2:
 	sys.stderr.write('Usage: python {} cfgfile\n'.format(sys.argv[0]))
 	logging.critical(u'Usage: python {} cfgfile\n'.format(sys.argv[0]))
 	raise SystemExit(1)
 
-# РёРјСЏ РєРѕРЅС„. С„Р°Р№Р»Р°
+# имя конф. файла
 name = sys.argv[1].strip()
 
-# РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ РєРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅРѕРіРѕ С„Р°Р№Р»Р° 
+# Проверяем наличие конфигурационного файла 
 if not os.path.isfile(name):
 	sys.stderr.write('Error: {} not a file...'.format(name))
 	logging.critical(u'{} not a file...'.format(name))
 	raise SystemExit(2)
 
-# Р’ СЌС‚РѕС‚ СЃРїРёСЃРѕРє Р·Р°РЅРѕСЃСЏС‚СЃСЏ СЃРїРёСЃРєРё РїСѓС‚РµР№ РґРѕ С„Р°Р№Р»РѕРІ Рё РёРјСЏ Р°СЂС…РёРІР°
-# РЎС‚СЂСѓРєС‚СѓСЂР°:
-# lines[n][0] - РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё РІ РєРѕРЅС„. С„Р°Р№Р»Рµ (СЃ СѓС‡РµС‚РѕРј РєРѕРјРјРµРЅС‚РѕРІ, С‚.Рµ. РЅРѕРјРµСЂ С„РёР·РёС‡РµСЃРєРѕР№ СЃС‚СЂРѕРєРё)
-# lines[n][1] - РїСѓС‚СЊ РґРѕ РёСЃС‚РѕС‡РЅРёРєР° Р°СЂС…РёРІР° (С‡С‚Рѕ Р°СЂС…РёРІРёСЂСѓРµРј)
-# lines[n][2] - РїСѓС‚СЊ РґРѕ РїР°РїРєРё, РіРґРµ Р±СѓРґРµС‚ СЃРѕР·РґР°РЅ С„Р°Р№Р» Р°СЂС…РёРІР°
-# lines[n][3] - РёРјСЏ Р°СЂС…РёРІР°. Рє РЅРµРјСѓ Р±СѓРґРµС‚ РїСЂРёР±Р°РІР»РµРЅР° СЃС‚СЂРѕРєР° _Р“Р“Р“Р“РњРњР”Р”Р§Р§РњРњРЎРЎ
+# В этот список заносятся списки путей до файлов и имя архива
+# Структура:
+# lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е. номер физической строки)
+# lines[n][1] - путь до источника архива (что архивируем)
+# lines[n][2] - путь до папки, где будет создан файл архива
+# lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
 
 lines=[]
 
-# Р§РёС‚Р°РµРј РєРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ С„Р°Р№Р»
+# Читаем конфигурационный файл
 with open(name, 'r') as cfg:
 	strnum = 0
 	for s in cfg:
@@ -41,43 +44,43 @@ with open(name, 'r') as cfg:
 		if '#' not in s:
 			lines += [[str(strnum)] + s.strip().split(';')] 
 
-# РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ СЃС‚СЂРѕРє РІ lines 
+# Проверяем наличие строк в lines 
 if len(lines) == 0:
 	sys.stderr.write('Error: file {} is empty...'.format(name))
 	logging.critical(u'file {} is empty. Aborting without archieving...'.format(name))
 	raise SystemExit(3)
 
-# РџСЂРѕРІРµСЂСЏРµРј СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕРЅС„. С„Р°Р№Р»Р°
+# Проверяем содержимое конф. файла
 i = 0
 while i < len(lines):
-	if len(lines[i]) != 4:             # РєРѕР»РёС‡РµСЃС‚РІРѕ РїР°СЂР°РјРµС‚СЂРѕРІ
+	if len(lines[i]) != 4:             # количество параметров
 		sys.stderr.write('Error: {} - invalid number of parameters in string {}...'.format(name, lines[i][0]))
 		logging.error(u'{} - invalid number of parameters in string {}...'.format(name, lines[i][0]))
 		del lines[i]
 		continue
-	if len(lines[i][3]) == 0:          # РЅР°Р»РёС‡РёРµ РёРјРµРЅРё Р°СЂС…РёРІР°
+	if len(lines[i][3]) == 0:          # наличие имени архива
 		sys.stderr.write('Error: {} - archive name missing in string {}...'.format(name, lines[i][0]))
 		logging.error(u'{} - archive name missing in string {}...'.format(name, lines[i][0]))
 		del lines[i]
 		continue
-	if not os.path.isdir(lines[i][1]): # РїСЂР°РІРёР»СЊРЅРѕСЃС‚СЊ РїСѓС‚Рё РґРѕ РёСЃС‚РѕС‡РЅРёРєР°
+	if not os.path.isdir(lines[i][1]): # правильность пути до источника
 		sys.stderr.write('Error: in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		logging.error(u'in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		del lines[i]
 		continue
-	if not os.path.isdir(lines[i][2]): # РїСЂР°РІРёР»СЊРЅРѕСЃС‚СЊ РїСѓС‚Рё РґРѕ РїСЂРёРµРјРЅРёРєР°
+	if not os.path.isdir(lines[i][2]): # правильность пути до приемника
 		sys.stderr.write('Error: in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		logging.error(u'in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		del lines[i]
 	i += 1
 
-# РџСЂРѕРІРµСЂСЏРµРј РЅР°Р»РёС‡РёРµ СЃС‚СЂРѕРє РІ lines РїРѕСЃР»Рµ РїСЂРѕРІРµСЂРєРё РЅР° РїСЂР°РІРёР»СЊРЅРѕСЃС‚СЊ
+# Проверяем наличие строк в lines после проверки на правильность
 if len(lines) == 0:
 	sys.stderr.write('Error: file {} is empty...'.format(name))
 	logging.critical(u'file {} is empty after testing. Aborting without archieving...'.format(name))
 	raise SystemExit(3)
 
-# СЃРѕР±СЃС‚РІРµРЅРЅРѕ Р°СЂС…РёРІРёСЂРѕРІР°РЅРёРµ
+# собственно архивирование
 archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
 copyto = '\\\\NAS\\copy1c\\py_backup'
 for s in lines:

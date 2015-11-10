@@ -45,7 +45,7 @@ def create_html():
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = u'D:\\backup\\logs\\backup1c.log')
 
 # Пишем в лог приветствие запуска архивирования
-logging.info(u'======= Archiving started in platform {} ======='.format(sys.platform))
+logging.info(u'======= Archiving started on platform {} ======='.format(sys.platform))
 
 # Проверяем количество аргументов в командной строке
 if len(sys.argv) != 2:
@@ -122,6 +122,7 @@ if len(lines) == 0:
 # собственно архивирование
 archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
 copyto = '\\\\NAS\\copy1c\\py_backup'
+total_size = 0
 for s in lines:
     archive_file_name = s[3] + '_' + time.strftime('%Y%m%d%H%M%S') + '.zip'
     archive_file = s[2] + os.sep + archive_file_name 
@@ -131,14 +132,21 @@ for s in lines:
     exit_code = subprocess.call([archivator, 'a', '-tzip', archive_file, '-mx5', source_files, '-ssw'])
     if exit_code == 0:
         logging.info(u'  Archive {} creating success...'.format(archive_file))
-        logging.info(u'  Starting copy {} to {}'.format(archive_file_name, copyto))
+        listofarch = [ i for i in os.listdir(s[2]) if i[:8] == archive_file_name[:8]]
+        size = 0
+        for name in listofarch:
+            size += os.path.getsize(s[2] + os.sep + name)
+        total_size += size
+        logging.info(u'Size of archives named {} is {} MB'.format(archive_file_name[:8], size // 1024 //1024))
         try:
             shutil.copy(archive_file, copyto + os.sep + archive_file_name)
         except Exception as ex:
-            logging.error(u'  Error copy {} to {} with exeption {}'.format(archive_file, copyto, ex))
+            logging.error(u'  Error copy {} to {} with exception {}'.format(archive_file, copyto, ex))
         else:
             logging.info(u'  Copy {} to {} success...'.format(archive_file, copyto))
     else:
         logging.critical(u'  Error on creating archive {} with exit code {} ...'.format(archive_file,exit_code))
+
+logging.info(u'Total size of archives after this session is {} MB'.format(total_size // 1024 // 1024))
 
 create_html()

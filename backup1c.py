@@ -7,6 +7,41 @@ import sys
 import time
 import logging
 
+def create_html():
+	''' Функция создания html из лога формата logging
+
+	    Создаёт файл формата html из лога формата logging и копирует
+	    его в \\NAS\copy1c\logs\log1c.html
+	'''
+	with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
+		l = log.readlines()
+		l1 = l[-40:]
+		del l
+	with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
+		loghtml.write(u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\n')
+		loghtml.write(u'<html>\n')
+		loghtml.write(u'<head>\n')
+		loghtml.write(u'<meta http-equiv="content-type" content="text/html; charset=utf-8">\n')
+		loghtml.write(u'<title>log</title>\n')
+		loghtml.write(u'</head>\n')
+		loghtml.write(u'<body>\n')
+		loghtml.write(u'Created: <b>'+time.strftime('%d.%m.%Y %H:%M') + '</b><br>')
+		loghtml.write(u'<code>\n')
+		for s in l1:
+			if '=======' in s:
+				loghtml.write(u'<b>'+s+'</b><br>')
+			elif s.startswith('ERROR'):
+				loghtml.write(u'<font color="red">'+ s + u'</font><br>\n')
+			elif s.startswith('CRITICAL'):
+				loghtml.write(u'<font color="red"><b>'+ s + u'</b></font><br>\n')
+			else:
+				loghtml.write(u'<font color="green">'+ s + u'</font><br>\n')
+		loghtml.write(u'</code>\n')
+		loghtml.write(u'</body>\n')
+		loghtml.write(u'</head>\n')
+	shutil.copy('D:\\backup\\logs\\log.html','\\\\NAS\\copy1c\\logs\\log1c.html') 
+
+
 logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = u'D:\\backup\\logs\\backup1c.log')
 
 # Пишем в лог приветствие запуска архивирования
@@ -16,6 +51,7 @@ logging.info(u'======= Archiving started in platform {} ======='.format(sys.plat
 if len(sys.argv) != 2:
 	sys.stderr.write('Usage: python {} cfgfile\n'.format(sys.argv[0]))
 	logging.critical(u'Usage: python {} cfgfile\n'.format(sys.argv[0]))
+	create_html()
 	raise SystemExit(1)
 
 # имя конф. файла
@@ -25,6 +61,7 @@ name = sys.argv[1].strip()
 if not os.path.isfile(name):
 	sys.stderr.write('Error: {} not a file...'.format(name))
 	logging.critical(u'{} not a file...'.format(name))
+	create_html()
 	raise SystemExit(2)
 
 # В этот список заносятся списки путей до файлов и имя архива
@@ -48,6 +85,7 @@ with open(name, 'r') as cfg:
 if len(lines) == 0:
 	sys.stderr.write('Error: file {} is empty...'.format(name))
 	logging.critical(u'file {} is empty. Aborting without archieving...'.format(name))
+	create_html()
 	raise SystemExit(3)
 
 # Проверяем содержимое конф. файла
@@ -78,6 +116,7 @@ while i < len(lines):
 if len(lines) == 0:
 	sys.stderr.write('Error: file {} is empty...'.format(name))
 	logging.critical(u'file {} is empty after testing. Aborting without archieving...'.format(name))
+	create_html()
 	raise SystemExit(3)
 
 # собственно архивирование
@@ -101,3 +140,5 @@ for s in lines:
             logging.info(u'  Copy {} to {} success...'.format(archive_file, copyto))
     else:
         logging.critical(u'  Error on creating archive {} with exit code {} ...'.format(archive_file,exit_code))
+
+create_html()

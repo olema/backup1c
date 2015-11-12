@@ -14,9 +14,7 @@ def create_html():
 	    его в \\NAS\copy1c\logs\log1c.html
 	'''
 	with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
-		l = log.readlines()
-		l1 = l[-60:]
-		del l
+		l = log.readlines()[-60:]
 	with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
 		loghtml.write(u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\n')
 		loghtml.write(u'<html>\n')
@@ -27,7 +25,7 @@ def create_html():
 		loghtml.write(u'<body>\n')
 		loghtml.write(u'Created: <b>'+time.strftime('%d.%m.%Y %H:%M') + '</b><br>\n')
 		loghtml.write(u'<code>\n')
-		for s in l1:
+		for s in l:
 			if '=======' in s:
 				loghtml.write(u'<b>'+s+'</b><br>\n')
 			elif s.startswith('ERROR'):
@@ -56,7 +54,7 @@ logging.info(u'======= Archiving started on platform {} ======='.format(sys.plat
 
 
 lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\1C', '1cv82buh'],
-       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\1C', '1cv77buh'],
+       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\\1C', '1cv77buh'],
        ['3','D:\\1C_Base\\v8.2\\ZiK 2015', 'D:\\backup\\1C', '1cv82zik'],
        ['4','D:\\1C_Base\\v8.2\\Omega', 'D:\\backup\\1C', '1cv82ahd']
       ]

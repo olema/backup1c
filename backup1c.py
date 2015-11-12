@@ -15,7 +15,7 @@ def create_html():
 	'''
 	with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
 		l = log.readlines()
-		l1 = l[-40:]
+		l1 = l[-60:]
 		del l
 	with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
 		loghtml.write(u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\n')
@@ -55,10 +55,10 @@ logging.info(u'======= Archiving started on platform {} ======='.format(sys.plat
 # lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
 
 
-lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\testbackup', '1cv82buh'],
-       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\testbackup', '1cv77buh'],
-       ['3','D:\\1C_Base\\v8.2\ZiK 2015', 'D:\\backup\\testbackup', '1cv82zik'],
-       ['4','D:\\1C_Base\\v8.2\Omega', 'D:\\backup\\testbackup', '1cv82ahd']
+lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\1C', '1cv82buh'],
+       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\1C', '1cv77buh'],
+       ['3','D:\\1C_Base\\v8.2\\ZiK 2015', 'D:\\backup\\1C', '1cv82zik'],
+       ['4','D:\\1C_Base\\v8.2\\Omega', 'D:\\backup\\1C', '1cv82ahd']
       ]
 
 '''

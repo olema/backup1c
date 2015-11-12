@@ -47,6 +47,23 @@ logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level
 # Пишем в лог приветствие запуска архивирования
 logging.info(u'======= Archiving started on platform {} ======='.format(sys.platform))
 
+# Проверяем количество аргументов в командной строке
+if len(sys.argv) != 2:
+	sys.stderr.write('Usage: python {} cfgfile\n'.format(sys.argv[0]))
+	logging.critical(u'Usage: python {} cfgfile\n'.format(sys.argv[0]))
+	create_html()
+	raise SystemExit(1)
+
+# имя конф. файла
+name = sys.argv[1].strip()
+
+# Проверяем наличие конфигурационного файла 
+if not os.path.isfile(name):
+	sys.stderr.write('Error: {} not a file...'.format(name))
+	logging.critical(u'{} not a file...'.format(name))
+	create_html()
+	raise SystemExit(2)
+
 # В этот список заносятся списки путей до файлов и имя архива
 # Структура:
 # lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е. номер физической строки)
@@ -54,40 +71,44 @@ logging.info(u'======= Archiving started on platform {} ======='.format(sys.plat
 # lines[n][2] - путь до папки, где будет создан файл архива
 # lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
 
+lines=[]
 
-lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\testbackup', '1cv82buh'],
-       ['2','D:\1C_Base\V7.7\Base1c_77', 'D:\backup\testbackup', '1cv77buh'],
-       ['3','D:\1C_Base\v8.2\ZiK 2015', 'D:\backup\testbackup', '1cv82zik'],
-       ['4','D:\1C_Base\v8.2\Omega', 'D:\backup\testbackup', '1cv82ahd']
-      ]
+# Читаем конфигурационный файл
+with open(name, 'r') as cfg:
+	strnum = 0
+	for s in cfg:
+		strnum += 1
+		if '#' not in s:
+			lines += [[str(strnum)] + s.strip().split(';')] 
 
-'''
-lines = [['1','D:\\Тест папка', 'D:\\backup\\testbackup','pysource'],
-         ['2','D:\\1C_Base\\v7.7\\Base1c_77_', 'D:\\backup\\testbackup', '1cBase77']
-        ]
-'''
+# Проверяем наличие строк в lines 
+if len(lines) == 0:
+	sys.stderr.write('Error: file {} is empty...'.format(name))
+	logging.critical(u'file {} is empty. Aborting without archieving...'.format(name))
+	create_html()
+	raise SystemExit(3)
 
-# Проверяем содержимое lines[] 
+# Проверяем содержимое конф. файла
 i = 0
 while i < len(lines):
 	if len(lines[i]) != 4:             # количество параметров
-		sys.stderr.write('Error: - invalid number of parameters in string {}...'.format(lines[i][0]))
-		logging.error(u'- invalid number of parameters in string {}...'.format(lines[i][0]))
+		sys.stderr.write('Error: {} - invalid number of parameters in string {}...'.format(name, lines[i][0]))
+		logging.error(u'{} - invalid number of parameters in string {}...'.format(name, lines[i][0]))
 		del lines[i]
 		continue
 	if len(lines[i][3]) == 0:          # наличие имени архива
-		sys.stderr.write('Error: - archive name missing in string {}...'.format(lines[i][0]))
-		logging.error(u'- archive name missing in string {}...'.format(lines[i][0]))
+		sys.stderr.write('Error: {} - archive name missing in string {}...'.format(name, lines[i][0]))
+		logging.error(u'{} - archive name missing in string {}...'.format(name, lines[i][0]))
 		del lines[i]
 		continue
 	if not os.path.isdir(lines[i][1]): # правильность пути до источника
-		sys.stderr.write('Error: in string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
-		logging.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
+		sys.stderr.write('Error: in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
+		logging.error(u'in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		del lines[i]
 		continue
 	if not os.path.isdir(lines[i][2]): # правильность пути до приемника
-		sys.stderr.write('Error: in string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
-		logging.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
+		sys.stderr.write('Error: in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
+		logging.error(u'in {} string {}: {} not a path...'.format(name, lines[i][0], lines[i][1]))
 		del lines[i]
 	i += 1
 
@@ -109,7 +130,6 @@ for s in lines:
     source_files = s[1] 
     zip_command = '"' + archivator + archive_file + source_files + '"'
     logging.info(u'+++ Start creating archive {}'.format(source_files))
-    print('Start archive {}'.format(source_files))
     exit_code = subprocess.call([archivator, 'a', '-tzip', archive_file, '-mx5', source_files, '-ssw'])
     if exit_code == 0:
         logging.info(u'  Archive {} creating success...'.format(archive_file))
@@ -120,7 +140,6 @@ for s in lines:
         total_size += size
         total_numberoffiles += len(listofarch)
         logging.info(u'Size of archives named {} is {} MB in {} files'.format(archive_file_name[:8], size // 1024 //1024, len(listofarch)))
-        print('Start copy {}'.format(archive_file_name))
         try:
             shutil.copy(archive_file, copyto + os.sep + archive_file_name)
         except Exception as ex:

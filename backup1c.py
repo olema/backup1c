@@ -56,9 +56,9 @@ logging.info(u'======= Archiving started on platform {} ======='.format(sys.plat
 
 
 lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\testbackup', '1cv82buh'],
-       ['2','D:\1C_Base\V7.7\Base1c_77', 'D:\backup\testbackup', '1cv77buh'],
-       ['3','D:\1C_Base\v8.2\ZiK 2015', 'D:\backup\testbackup', '1cv82zik'],
-       ['4','D:\1C_Base\v8.2\Omega', 'D:\backup\testbackup', '1cv82ahd']
+       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\testbackup', '1cv77buh'],
+       ['3','D:\\1C_Base\\v8.2\ZiK 2015', 'D:\\backup\\testbackup', '1cv82zik'],
+       ['4','D:\\1C_Base\\v8.2\Omega', 'D:\\backup\\testbackup', '1cv82ahd']
       ]
 
 '''

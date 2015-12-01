@@ -7,34 +7,40 @@ import sys
 import time
 import logging
 
-# Функция удаления старых архивов в папке с архивами на диске срвера
-# - pathtofiles - путь до папки, где лежат архивы на ServerHP
-# - pathtonas - путь до папок с архивами на NAS
-# - namearc - первые 8 символов имени архива, который надо удалить
-# - threshold - число архивов, после превышения которого надо удалить 5 старых
-def delfiles(pathtofiles, pathtonas, namearc, threshold):
-    # получаем список файлов
-    d = os.listdir(pathtofiles)
-    d.sort()
-    # фильтруем имена архивов, которые хотим удалить
-    dn = [i for i in d if i.startswith(namearc)]
-    # если кол-во файлов в каталоге больше барьера, удаляем 5 старых файлов
-    if len(dn) > threshold:
-        filesfordel = dn[:5]
-        for i in filesfordel:
-            # проверяем наличие файла на NAS
-            if os.path.isfile(pathtonas + os.sep + i):
-                # удаляем файл в директории с бэкапами на локальном ресурсе
-                # ServerHP
-                try:
-                    os.remove(pathtofiles + os.sep + i)
-                except OSError:
-                    print(r'Ошибка удаления {}'.format(i))
-                else:
-                    print(r'Файл {} успешно удален.'.format(i))
-            else:
-                print('Не найден на NAS: {}'.format(pathtonas + os.sep + i))
+# Путь до архиватора
+archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
 
+# Путь до архивов на NAS
+copyto = '\\\\NAS\\copy1c\\py_backup_test'
+
+# Количество файлов каждого архива, который храним на ServerHP
+# если больше, то удаляем 5 старых архивов
+threshold = 9
+
+# В этот список заносятся списки путей до файлов которые архивируем,
+# , путь до файла-архива и имя архива
+# В этот список заносятся списки путей до файлов и имя архива
+# Структура:
+# lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е.
+# номер физической строки)
+# lines[n][1] - путь до источника архива (что архивируем)
+# lines[n][2] - путь до папки, где будет создан файл архива
+# lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
+'''
+lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения',\
+        'D:\\backup\\1C', '1cv82buh'],
+       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\\1C', '1cv77buh'],
+       ['3','D:\\1C_Base\\v8.2\\ZiK 2015', 'D:\\backup\\1C', '1cv82zik'],
+       ['4','D:\\1C_Base\\v8.2\\Omega', 'D:\\backup\\1C', '1cv82ahd']
+      ]
+'''
+
+lines = [['1','D:\\Тест папка', 'D:\\backup\\testbackup','pysource'],
+        ['2','D:\\Backup\\logs', 'D:\\backup\\testbackup', 'logs']
+]
+
+
+# Функция создания лога в формате html
 def create_html():
     ''' Функция создания html из лога формата logging
 
@@ -76,27 +82,7 @@ logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',level=lo
 logging.info(u'======= Archiving started on platform {}\
              ======='.format(sys.platform))
 
-# В этот список заносятся списки путей до файлов которые архивируем,
-# , путь до файла-архива и имя архива
-# В этот список заносятся списки путей до файлов и имя архива
-# Структура:
-# lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е.
-# номер физической строки)
-# lines[n][1] - путь до источника архива (что архивируем)
-# lines[n][2] - путь до папки, где будет создан файл архива
-# lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
-#'''
-lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения',\
-        'D:\\backup\\1C', '1cv82buh'],
-       ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\\1C', '1cv77buh'],
-       ['3','D:\\1C_Base\\v8.2\\ZiK 2015', 'D:\\backup\\1C', '1cv82zik'],
-       ['4','D:\\1C_Base\\v8.2\\Omega', 'D:\\backup\\1C', '1cv82ahd']
-      ]
-#'''
 
-# lines = [['1','D:\\Тест папка', 'D:\\backup\\testbackup','pysource'],
-#         ['2','D:\\1C_Base\\v7.7\\Base1c_77_', 'D:\\backup\\testbackup', '1cBase77']
-#        ]
 
 
 # Проверяем содержимое lines[]
@@ -132,8 +118,6 @@ if len(lines) == 0:
     raise SystemExit(3)
 
 # собственно архивирование
-archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
-copyto = '\\\\NAS\\copy1c\\py_backup'
 total_size = 0
 total_numberoffiles = 0
 for s in lines:
@@ -164,5 +148,38 @@ for s in lines:
         logging.critical(u'  Error on creating archive {} with exit code {} ...'.format(archive_file,exit_code))
 
 logging.info(u'Total size of archives after this session is {} MB in {} files'.format(total_size // 1024 // 1024, total_numberoffiles))
+
+# Функция удаления старых архивов в папке с архивами на диске сервера
+# - pathtofiles - путь до папки, где лежат архивы на ServerHP
+# - pathtonas - путь до папок с архивами на NAS
+# - namearc - первые 8 символов имени архива, который надо удалить
+# - threshold - число архивов, после превышения которого надо удалить 5 старых
+#def delfiles(pathtofiles, pathtonas, namearc, threshold):
+for i in lines:
+    pathtofiles = i[2]
+    pathtonas = copyto
+    namearc = i[3]
+    # получаем список файлов
+    d = os.listdir(pathtofiles)
+    d.sort()
+    # фильтруем имена архивов, которые хотим удалить
+    dn = [i for i in d if i.startswith(namearc)]
+    # если кол-во файлов в каталоге больше барьера, удаляем 5 старых файлов
+    if len(dn) > threshold:
+        filesfordel = dn[:5]
+        for i in filesfordel:
+            # проверяем наличие файла на NAS
+            if os.path.isfile(pathtonas + os.sep + i):
+                # удаляем файл в директории с бэкапами на локальном ресурсе
+                # ServerHP
+                try:
+                    os.remove(pathtofiles + os.sep + i)
+                except OSError:
+                    logging.error(u'Error deleting {}'.format(ipathtofiles + os.sep + i))
+                else:
+                    logging.info(u'{} deleting success'.format(pathtofiles + os.sep + i))
+            else:
+                logging.error('Not find on NAS: {}'.format(pathtonas + os.sep + i))
+
 
 create_html()

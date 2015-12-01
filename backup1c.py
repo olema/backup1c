@@ -7,65 +7,104 @@ import sys
 import time
 import logging
 
+# Функция удаления старых архивов в папке с архивами на диске срвера
+# - pathtofiles - путь до папки, где лежат архивы на ServerHP
+# - pathtonas - путь до папок с архивами на NAS
+# - namearc - первые 8 символов имени архива, который надо удалить
+# - threshold - число архивов, после превышения которого надо удалить 5 старых
+def delfiles(pathtofiles, pathtonas, namearc, threshold):
+    # получаем список файлов
+    d = os.listdir(pathtofiles)
+    d.sort()
+    # фильтруем имена архивов, которые хотим удалить
+    dn = [i for i in d if i.startswith(namearc)]
+    # если кол-во файлов в каталоге больше барьера, удаляем 5 старых файлов
+    if len(dn) > threshold:
+        filesfordel = dn[:5]
+        for i in filesfordel:
+            # проверяем наличие файла на NAS
+            if os.path.isfile(pathtonas + os.sep + i):
+                # удаляем файл в директории с бэкапами на локальном ресурсе
+                # ServerHP
+                try:
+                    os.remove(pathtofiles + os.sep + i)
+                except OSError:
+                    print(r'Ошибка удаления {}'.format(i))
+                else:
+                    print(r'Файл {} успешно удален.'.format(i))
+            else:
+                print('Не найден на NAS: {}'.format(pathtonas + os.sep + i))
+
+
 def create_html():
-	''' Функция создания html из лога формата logging
+    ''' Функция создания html из лога формата logging
 
-	    Создаёт файл формата html из лога формата logging и копирует
-	    его в \\NAS\copy1c\logs\log1c.html
-	'''
-	with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
-		l = log.readlines()[-60:]
-	with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
-		loghtml.write(u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\n')
-		loghtml.write(u'<html>\n')
-		loghtml.write(u'<head>\n')
-		loghtml.write(u'<meta http-equiv="content-type" content="text/html; charset=utf-8">\n')
-		loghtml.write(u'<title>log</title>\n')
-		loghtml.write(u'</head>\n')
-		loghtml.write(u'<body>\n')
-		loghtml.write(u'Created: <b>'+time.strftime('%d.%m.%Y %H:%M') + '</b><br>\n')
-		loghtml.write(u'<code>\n')
-		for s in l:
-			if '=======' in s:
-				loghtml.write(u'<b>'+s+'</b><br>\n')
-			elif s.startswith('ERROR'):
-				loghtml.write(u'<font color="red">'+ s + u'</font><br>\n')
-			elif s.startswith('CRITICAL'):
-				loghtml.write(u'<font color="red"><b>'+ s + u'</b></font><br>\n')
-			else:
-				loghtml.write(u'<font color="green">'+ s + u'</font><br>\n')
-		loghtml.write(u'</code>\n')
-		loghtml.write(u'</body>\n')
-		loghtml.write(u'</head>\n')
-	shutil.copy('D:\\backup\\logs\\log.html','\\\\NAS\\copy1c\\logs\\log1c.html') 
+    Создаёт файл формата html из лога формата logging и копирует
+    его в \\NAS\copy1c\logs\log1c.html
+    '''
+    with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
+        l = log.readlines()[-60:]
+    with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
+        loghtml.write(u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0\
+                      Transitional//EN">\n')
+        loghtml.write(u'<html>\n')
+        loghtml.write(u'<head>\n')
+        loghtml.write(u'<meta http-equiv="content-type" content="text/html;\
+                      charset=utf-8">\n')
+        loghtml.write(u'<title>log</title>\n')
+        loghtml.write(u'</head>\n')
+        loghtml.write(u'<body>\n')
+        loghtml.write(u'Created: <b>'+time.strftime('%d.%m.%Y %H:%M') + \
+                      '</b><br>\n')
+        loghtml.write(u'<code>\n')
+        for s in l:
+            if '=======' in s:
+                loghtml.write(u'<b>'+s+'</b><br>\n')
+            elif s.startswith('ERROR'):
+                loghtml.write(u'<font color="red">'+ s + u'</font><br>\n')
+            elif s.startswith('CRITICAL'):
+                loghtml.write(u'<font color="red"><b>'+ s +\
+                              u'</b></font><br>\n')
+            else:
+                loghtml.write(u'<font color="green">'+ s + u'</font><br>\n')
+        loghtml.write(u'</code>\n')
+        loghtml.write(u'</body>\n')
+        loghtml.write(u'</head>\n')
+        shutil.copy('D:\\backup\\logs\\log.html',\
+                    '\\\\NAS\\copy1c\\logs\\log1c.html')
 
 
-logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = u'D:\\backup\\logs\\backup1c.log')
+logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',\
+                    level=logging.DEBUG,\
+                    filename=u'D:\\backup\\logs\\backup1c.log')
 
 # Пишем в лог приветствие запуска архивирования
-logging.info(u'======= Archiving started on platform {} ======='.format(sys.platform))
+logging.info(u'======= Archiving started on platform {}\
+             ======='.format(sys.platform))
 
-# В этот список заносятся списки путей до файлов и имя архива
+# В этот список заносятся списки путей до файлов которые архивируем,
+# , путь до файла-архива и имя архива
 # Структура:
-# lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е. номер физической строки)
+# lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е.
+# номер физической строки)
 # lines[n][1] - путь до источника архива (что архивируем)
 # lines[n][2] - путь до папки, где будет создан файл архива
 # lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
-
-
-lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения', 'D:\\backup\\1C', '1cv82buh'],
+lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения',\
+        'D:\\backup\\1C', '1cv82buh'],
        ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\\1C', '1cv77buh'],
        ['3','D:\\1C_Base\\v8.2\\ZiK 2015', 'D:\\backup\\1C', '1cv82zik'],
        ['4','D:\\1C_Base\\v8.2\\Omega', 'D:\\backup\\1C', '1cv82ahd']
       ]
 
-'''
+"""
 lines = [['1','D:\\Тест папка', 'D:\\backup\\testbackup','pysource'],
          ['2','D:\\1C_Base\\v7.7\\Base1c_77_', 'D:\\backup\\testbackup', '1cBase77']
         ]
-'''
+"""
 
-# Проверяем содержимое lines[] 
+# Проверяем содержимое lines[]
+# в случае если строка не прошла проверку, она удаляется из списка
 i = 0
 while i < len(lines):
 	if len(lines[i]) != 4:             # количество параметров
@@ -91,10 +130,10 @@ while i < len(lines):
 
 # Проверяем наличие строк в lines после проверки на правильность
 if len(lines) == 0:
-	sys.stderr.write('Error: file {} is empty...'.format(name))
-	logging.critical(u'file {} is empty after testing. Aborting without archieving...'.format(name))
-	create_html()
-	raise SystemExit(3)
+    sys.stderr.write('Error: file {} is empty...'.format(name))
+    logging.critical(u'file {} is empty after testing. Aborting without archieving...'.format(name))
+    create_html()
+    raise SystemExit(3)
 
 # собственно архивирование
 archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
@@ -103,10 +142,10 @@ total_size = 0
 total_numberoffiles = 0
 for s in lines:
     archive_file_name = s[3] + '_' + time.strftime('%Y%m%d%H%M%S') + '.zip'
-    archive_file = s[2] + os.sep + archive_file_name 
-    source_files = s[1] 
+    archive_file = s[2] + os.sep + archive_file_name
+    source_files = s[1]
     zip_command = '"' + archivator + archive_file + source_files + '"'
-    logging.info(u'+++ Start creating archive {}'.format(source_files))
+    logging.info(u'+++ Start creating archive {} to folder {}'.format(source_files, s[2]))
     print('Start archive {}'.format(source_files))
     exit_code = subprocess.call([archivator, 'a', '-tzip', archive_file, '-mx5', source_files, '-ssw'])
     if exit_code == 0:

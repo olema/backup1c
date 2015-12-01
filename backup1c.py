@@ -1,4 +1,8 @@
+# backup1c.py
 # -*- coding: cp1251 -*-
+# Скрипт архивирует базы и приложения 1С, копирует их на NAS и
+# удаляет, при привышении порогового кол-ва, файлы архивов на локальном ресурсе
+# сервера ServerHP
 
 import subprocess
 import os
@@ -7,14 +11,15 @@ import sys
 import time
 import logging
 
+
 # Путь до архиватора
 archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
 
 # Путь до архивов на NAS
 copyto = '\\\\NAS\\copy1c\\py_backup'
 
-# Количество файлов каждого архива, который храним на ServerHP
-# если больше, то удаляем 5 старых архивов
+# Количество файлов каждого архива, который храним на ServerHP.
+# Если больше, то удаляем 5 старых архивов
 threshold = 9
 
 # В этот список заносятся списки путей до файлов которые архивируем,
@@ -149,7 +154,7 @@ for s in lines:
 
 logging.info(u'Total size of archives after this session is {} MB in {} files'.format(total_size // 1024 // 1024, total_numberoffiles))
 
-# Функция удаления старых архивов в папке с архивами на диске сервера
+# Удаление старых архивов в папке с архивами на диске сервера
 # - pathtofiles - путь до папки, где лежат архивы на ServerHP
 # - pathtonas - путь до папок с архивами на NAS
 # - namearc - первые 8 символов имени архива, который надо удалить
@@ -164,7 +169,8 @@ for i in lines:
     d.sort()
     # фильтруем имена архивов, которые хотим удалить
     dn = [i for i in d if i.startswith(namearc)]
-    # если кол-во файлов в каталоге больше барьера, удаляем 5 старых файлов
+    # если кол-во файлов в каталоге больше указанного в threshold, удаляем 5
+    # старых файлов, предварительно проверив их на наличие на NAS
     if len(dn) > threshold:
         filesfordel = dn[:5]
         for i in filesfordel:
@@ -179,7 +185,7 @@ for i in lines:
                 else:
                     logging.info(u'{} deleting success'.format(pathtofiles + os.sep + i))
             else:
-                logging.error('Not find on NAS: {}'.format(pathtonas + os.sep + i))
+                logging.error(u'Not find on NAS: {}'.format(pathtonas + os.sep + i))
 
 
 create_html()

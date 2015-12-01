@@ -7,6 +7,7 @@ import sys
 import time
 import logging
 
+<<<<<<< HEAD
 # Функция удаления старых архивов в папке с архивами на диске срвера
 # - pathtofiles - путь до папки, где лежат архивы на ServerHP
 # - pathtonas - путь до папок с архивами на NAS
@@ -35,6 +36,8 @@ def delfiles(pathtofiles, pathtonas, namearc, threshold):
             else:
                 print('Не найден на NAS: {}'.format(pathtonas + os.sep + i))
 
+=======
+>>>>>>> e863d7ce600a6c29db4560415bb4aea4eb220cc2
 
 def create_html():
     ''' Функция создания html из лога формата logging
@@ -82,14 +85,23 @@ logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',\
 logging.info(u'======= Archiving started on platform {}\
              ======='.format(sys.platform))
 
+<<<<<<< HEAD
 # В этот список заносятся списки путей до файлов которые архивируем,
 # , путь до файла-архива и имя архива
+=======
+# В этот список заносятся списки путей до файлов и имя архива
+>>>>>>> e863d7ce600a6c29db4560415bb4aea4eb220cc2
 # Структура:
 # lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е.
 # номер физической строки)
 # lines[n][1] - путь до источника архива (что архивируем)
 # lines[n][2] - путь до папки, где будет создан файл архива
 # lines[n][3] - имя архива. к нему будет прибавлена строка _ГГГГММДДЧЧММСС
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> e863d7ce600a6c29db4560415bb4aea4eb220cc2
 lines=[['1','D:\\1C_Base\\v8.2\\Бухгалтерия государственного учереждения',\
         'D:\\backup\\1C', '1cv82buh'],
        ['2','D:\\1C_Base\\V7.7\\Base1c_77', 'D:\\backup\\1C', '1cv77buh'],
@@ -104,7 +116,10 @@ lines = [['1','D:\\Тест папка', 'D:\\backup\\testbackup','pysource'],
 """
 
 # Проверяем содержимое lines[]
+<<<<<<< HEAD
 # в случае если строка не прошла проверку, она удаляется из списка
+=======
+>>>>>>> e863d7ce600a6c29db4560415bb4aea4eb220cc2
 i = 0
 while i < len(lines):
 	if len(lines[i]) != 4:             # количество параметров

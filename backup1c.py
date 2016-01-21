@@ -15,6 +15,9 @@ import logging.handlers
 # Путь до log-файла
 logfile = u'D:\\backup\\logs\\backup1c.log'
 
+# html-log
+loghtmlf = 'D:\\backup\\logs\\log.html'
+
 # Формат логирования
 # logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
 #                    level=logging.DEBUG,
@@ -38,8 +41,6 @@ copyto = '\\\\NAS\\copy1c\\py_backup'
 # Если больше, то удаляем 5 старых архивов
 threshold = 9
 
-# В этот список заносятся списки путей до файлов которые архивируем,
-# , путь до файла-архива и имя архива
 # В этот список заносятся списки путей до файлов и имя архива
 # Структура:
 # lines[n][0] - номер строки в конф. файле (с учетом комментов, т.е.
@@ -61,14 +62,15 @@ lines = [
 #        ['2','D:\\Backup\\logs', 'D:\\backup\\testbackup', 'logs']
 #        ]
 
+
 # Функция создания лога в формате html
 # Функция создания html из лога формата logging
 # Создаёт файл формата html из лога формата logging и копирует
 #    его в \\NAS\copy1c\logs\log1c.html
-def create_html():
-    with open('D:\\backup\\logs\\backup1c.log', 'r', encoding='cp1251') as log:
+def create_html(logfile, loghtmlf):
+    with open(logfile, 'r', encoding='cp1251') as log:
         l = log.readlines()[-60:]
-    with open('D:\\backup\\logs\\log.html', 'w', encoding='utf-8') as loghtml:
+    with open(loghtmlf, 'w', encoding='utf-8') as loghtml:
         loghtml.write(
             u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">\n')
         loghtml.write(u'<html>\n')
@@ -95,7 +97,7 @@ def create_html():
         loghtml.write(u'</body>\n')
         loghtml.write(u'</head>\n')
     try:
-        shutil.copy(r'D:\backup\logs\log.html', r'\\NAS\copy1c\logs\log1c.html')
+        shutil.copy(loghtmlf, r'\\NAS\copy1c\logs\log1c.html')
     except OSError as ex:
         logger.error(u'Copy log1c.html error with exception: {}'.format(ex))
     else:
@@ -159,7 +161,7 @@ for s in lines:
         print('Start copy {}'.format(archive_file_name))
         try:
             shutil.copy(archive_file, copyto + os.sep + archive_file_name)
-        except Exception as ex:
+        except OSError as ex:
             logger.error(u'  Error copy {} to {} with exception {}'.format(archive_file, copyto, ex))
         else:
             logger.info(u'  Copy {} to {} success...'.format(archive_file, copyto))
@@ -201,4 +203,4 @@ for i in lines:
             else:
                 logger.error(u'Not find on NAS: {}'.format(pathtonas + os.sep + i))
 
-create_html()
+create_html(logfile, loghtmlf)

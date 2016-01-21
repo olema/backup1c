@@ -10,14 +10,23 @@ import shutil
 import sys
 import time
 import logging
+import logging.handlers
 
 # ѕуть до log-файла
 logfile = u'D:\\backup\\logs\\backup1c.log'
 
 # ‘ормат логировани€
-logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
-                    level=logging.DEBUG,
-                    filename=logfile)
+# logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
+#                    level=logging.DEBUG,
+#                    filename=logfile)
+
+dateformat = '%Y-%m-%d %H:%M:%S'
+fileformat = '%(levelname)-8s [%(asctime)s] %(message)s'
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=1024*1024, backupCount=10)
+handler.setFormatter(logging.Formatter(fileformat, dateformat))
+logger.addHandler(handler)
 
 # ѕуть до архиватора
 archivator = 'C:\\Program Files\\7-Zip\\7z.exe'
@@ -88,12 +97,12 @@ def create_html():
     try:
         shutil.copy(r'D:\backup\logs\log.html', r'\\NAS\copy1c\logs\log1c.html')
     except OSError as ex:
-        logging.error(u'Copy log1c.html error with exception: {}'.format(ex))
+        logger.error(u'Copy log1c.html error with exception: {}'.format(ex))
     else:
-        logging.info(u'Copy log1c.html success...')
+        logger.info(u'Copy log1c.html success...')
 
 # ѕишем в лог приветствие запуска архивировани€
-logging.info(u'======= Archiving started on platform {}\
+logger.info(u'======= Archiving started on platform {}\
              ======='.format(sys.platform))
 
 # ѕровер€ем содержимое lines[]
@@ -102,28 +111,28 @@ i = 0
 while i < len(lines):
     if len(lines[i]) != 4:  # количество параметров
         sys.stderr.write('Error: - invalid number of parameters in string {}...'.format(lines[i][0]))
-        logging.error(u'- invalid number of parameters in string {}...'.format(lines[i][0]))
+        logger.error(u'- invalid number of parameters in string {}...'.format(lines[i][0]))
         del lines[i]
         continue
     if len(lines[i][3]) == 0:  # наличие имени архива
         sys.stderr.write('Error: - archive name missing in string {}...'.format(lines[i][0]))
-        logging.error(u'- archive name missing in string {}...'.format(lines[i][0]))
+        logger.error(u'- archive name missing in string {}...'.format(lines[i][0]))
         del lines[i]
         continue
     if not os.path.isdir(lines[i][1]):  # правильность пути до источника
         sys.stderr.write('Error: in string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
-        logging.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
+        logger.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
         del lines[i]
         continue
     if not os.path.isdir(lines[i][2]):  # правильность пути до приемника
         sys.stderr.write('Error: in string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
-        logging.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
+        logger.error(u' - string {}: {} not a path...'.format(lines[i][0], lines[i][1]))
         del lines[i]
     i += 1
 
 # ѕровер€ем наличие строк в lines после проверки на правильность
 if len(lines) == 0:
-    logging.critical(u'List is empty after testing. Aborting without archieving...')
+    logger.critical(u'List is empty after testing. Aborting without archieving...')
     create_html()
     raise SystemExit(3)
 
@@ -135,29 +144,29 @@ for s in lines:
     archive_file = s[2] + os.sep + archive_file_name
     source_files = s[1]
     zip_command = '"' + archivator + archive_file + source_files + '"'
-    logging.info(u'+++ Start creating archive {} to folder {}'.format(source_files, s[2]))
+    logger.info(u'+++ Start creating archive {} to folder {}'.format(source_files, s[2]))
     print('Start archive {}'.format(source_files))
     exit_code = subprocess.call([archivator, 'a', '-tzip', archive_file, '-mx5', source_files, '-ssw'])
     if exit_code == 0:
-        logging.info(u'Archive {} creating success...'.format(archive_file))
+        logger.info(u'Archive {} creating success...'.format(archive_file))
         listofarch = [i for i in os.listdir(s[2]) if i[:8] == archive_file_name[:8]]
         size = 0
         for name in listofarch:
             size += os.path.getsize(s[2] + os.sep + name)
         total_size += size
         total_numberoffiles += len(listofarch)
-        logging.info(u'Size of archives named {} is {} MB in {} files'.format(archive_file_name[:8], size // 1024 // 1024, len(listofarch)))
+        logger.info(u'Size of archives named {} is {} MB in {} files'.format(archive_file_name[:8], size // 1024 // 1024, len(listofarch)))
         print('Start copy {}'.format(archive_file_name))
         try:
             shutil.copy(archive_file, copyto + os.sep + archive_file_name)
         except Exception as ex:
-            logging.error(u'  Error copy {} to {} with exception {}'.format(archive_file, copyto, ex))
+            logger.error(u'  Error copy {} to {} with exception {}'.format(archive_file, copyto, ex))
         else:
-            logging.info(u'  Copy {} to {} success...'.format(archive_file, copyto))
+            logger.info(u'  Copy {} to {} success...'.format(archive_file, copyto))
     else:
-        logging.critical(u'  Error on creating archive {} with exit code {} ...'.format(archive_file, exit_code))
+        logger.critical(u'  Error on creating archive {} with exit code {} ...'.format(archive_file, exit_code))
 
-logging.info(u'Total size of archives after this session is {} MB in {} files'.format(total_size // 1024 // 1024, total_numberoffiles))
+logger.info(u'Total size of archives after this session is {} MB in {} files'.format(total_size // 1024 // 1024, total_numberoffiles))
 
 # ”даление старых архивов в папке с архивами на диске сервера
 # - pathtofiles - путь до папки, где лежат архивы на ServerHP
@@ -186,10 +195,10 @@ for i in lines:
                 try:
                     os.remove(pathtofiles + os.sep + i)
                 except OSError:
-                    logging.error(u'Error deleting {}'.format(pathtofiles + os.sep + i))
+                    logger.error(u'Error deleting {}'.format(pathtofiles + os.sep + i))
                 else:
-                    logging.info(u'{} deleting success'.format(pathtofiles + os.sep + i))
+                    logger.info(u'{} deleting success'.format(pathtofiles + os.sep + i))
             else:
-                logging.error(u'Not find on NAS: {}'.format(pathtonas + os.sep + i))
+                logger.error(u'Not find on NAS: {}'.format(pathtonas + os.sep + i))
 
 create_html()
